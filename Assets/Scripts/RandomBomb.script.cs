@@ -1,25 +1,33 @@
 using TheAdventure.Scripting;
-using System;
 using TheAdventure;
+using System;
 
 public class RandomBomb : IScript
 {
-    DateTimeOffset _nextBombTimestamp;
+    private DateTimeOffset _next;
+    private const int RadiusNormal = 80;
+    private const int RadiusHard = 40;
+    private const int MinN = 2, MaxN = 5;
+    private const int MinH = 1, MaxH = 3;
 
     public void Initialize()
     {
-        _nextBombTimestamp = DateTimeOffset.UtcNow.AddSeconds(Random.Shared.Next(2, 5));
+        _next = DateTimeOffset.UtcNow;
     }
 
-    public void Execute(Engine engine)
+    public void Execute(Engine e)
     {
-        if (_nextBombTimestamp < DateTimeOffset.UtcNow)
-        {
-            _nextBombTimestamp = DateTimeOffset.UtcNow.AddSeconds(Random.Shared.Next(2, 5));
-            var playerPos = engine.GetPlayerPosition();
-            var bombPosX = playerPos.X + Random.Shared.Next(-50, 50);
-            var bombPosY = playerPos.Y + Random.Shared.Next(-50, 50);
-            engine.AddBomb(bombPosX, bombPosY, false);
-        }
+        if (DateTimeOffset.UtcNow < _next) return;
+        bool hard = e.HardMode;
+        int min = hard ? MinH : MinN;
+        int max = hard ? MaxH : MaxN;
+        int rad = hard ? RadiusHard : RadiusNormal;
+        _next = DateTimeOffset.UtcNow.AddSeconds(Random.Shared.Next(min, max));
+
+        int px = e.PlayerX;
+        int py = e.PlayerY;
+        int bx = px + Random.Shared.Next(-rad, rad);
+        int by = py + Random.Shared.Next(-rad, rad);
+        e.AddBomb(bx, by, false);
     }
 }
